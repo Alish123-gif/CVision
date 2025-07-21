@@ -7,6 +7,11 @@ export function formatSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
+// Simple classnames joiner utility
+export function cn(...args: (string | undefined | false | null)[]): string {
+  return args.filter(Boolean).join(" ");
+}
+
 export function generateUUID(): string {
   // Generates a RFC4122 version 4 UUID
   // https://stackoverflow.com/a/2117523/2715716

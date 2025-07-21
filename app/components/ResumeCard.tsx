@@ -1,5 +1,6 @@
 import React from "react";
 import type { Resume } from "../../types";
+import { Link } from "react-router";
 
 interface ResumeCardProps {
   resume: Resume;
@@ -22,7 +23,10 @@ const ResumeCard = ({ resume }: ResumeCardProps) => {
 
   return (
     <div className="resume-card fade-in">
-      <img src={resume.imagePath} alt={`${resume.companyName} Resume`} />
+      <img
+        src={resume.resumeImage || "/images/pdf.png"}
+        alt={`${resume.companyName} Resume`}
+      />
 
       <div className="p-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">
@@ -43,12 +47,12 @@ const ResumeCard = ({ resume }: ResumeCardProps) => {
           </span>
         </div>
 
-        <a
-          href={resume.resumePath}
+        <Link
+          to={`/resume/${resume.id}`}
           className="primary-button block text-center"
         >
           View Details
-        </a>
+        </Link>
       </div>
     </div>
   );

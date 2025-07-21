@@ -94,6 +94,8 @@ interface PuterStore {
 
   init: () => void;
   clearError: () => void;
+  getUserResumes: () => Promise<any[]>;
+  getResumeById: (id: string) => Promise<any | null>;
 }
 
 const getPuter = (): typeof window.puter | null =>
@@ -411,6 +413,46 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     return puter.kv.flush();
   };
 
+  // Helper to get all user resumes from KV
+  const getUserResumes = async (): Promise<any[]> => {
+    const puter = getPuter();
+    if (!puter) {
+      setError("Puter.js not available");
+      return [];
+    }
+    // List all keys starting with 'resume'
+    const result = await puter.kv.list("resume:*", true);
+    if (!result) return [];
+    // Type guard for KVItem[]
+    const isKVItemArray = (arr: any): arr is KVItem[] =>
+      Array.isArray(arr) &&
+      arr.length > 0 &&
+      typeof arr[0] === "object" &&
+      arr[0] !== null &&
+      "value" in arr[0];
+    if (Array.isArray(result) && result.length > 0 && isKVItemArray(result)) {
+      return result.map((item: KVItem) => JSON.parse(item.value));
+    }
+    // Otherwise, treat as string[]
+    const resumes: any[] = [];
+    for (const key of result as string[]) {
+      const value = await puter.kv.get(key);
+      if (value) resumes.push(JSON.parse(value));
+    }
+    return resumes;
+  };
+
+  // Helper to get a single resume by ID
+  const getResumeById = async (id: string): Promise<any | null> => {
+    const puter = getPuter();
+    if (!puter) {
+      setError("Puter.js not available");
+      return null;
+    }
+    const value = await puter.kv.get(`resume:${id}`);
+    return value ? JSON.parse(value) : null;
+  };
+
   return {
     isLoading: true,
     error: null,
@@ -452,5 +494,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     },
     init,
     clearError: () => set({ error: null }),
+    getUserResumes,
+    getResumeById,
   };
 });

@@ -6,6 +6,15 @@ import FileUploader from "~/components/FileUploader";
 import { usePuterStore } from "~/lib/puter";
 import { preparePrompt } from "~/../constants";
 
+// Helper to hash a file (SHA-256)
+async function hashFile(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hashBuffer = await window.crypto.subtle.digest("SHA-256", arrayBuffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 const upload = () => {
   const { auth, isLoading, ai, kv, fs } = usePuterStore();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,16 +31,31 @@ const upload = () => {
     jobDescription: string;
   }) => {
     setIsProcessing(true);
+    setStatus("Checking for duplicate resumes...");
+
+    if (!resume || !auth.user) return;
+
+    // Hash the file
+    const fileHash = await hashFile(resume);
+    const resumeKey = `resume:${auth.user.uuid}:${fileHash}`;
+
+    // Check for existing resume with this hash
+    const existing = await kv.get(resumeKey);
+    if (existing) {
+      setStatus("Resume already exists. Using existing analysis.");
+      setIsProcessing(false);
+      // Optionally, redirect to details page for this resume
+      const existingData = JSON.parse(existing);
+      window.location.href = `/resume/${existingData.id}`;
+      return;
+    }
+
     setStatus("Uploading your resume...");
-
-    if (!resume) return;
-
     const uploadedFile = await fs.upload([resume]);
     if (!uploadedFile) return setStatus("Failed to upload resume");
 
     setStatus("Converting your resume to image...");
     const { convertPdfToImage } = await import("~/lib/pdf-image");
-
     const imageFile = await convertPdfToImage(resume);
     if (!imageFile) return setStatus("Failed to convert resume to image");
 
@@ -39,7 +63,6 @@ const upload = () => {
     if (!uploadedImage) return setStatus("Failed to upload resume image");
 
     setStatus("Saving your resume...");
-
     const { generateUUID } = await import("~/lib/utils");
     const UUID = generateUUID();
 
@@ -49,11 +72,12 @@ const upload = () => {
       jobTitle,
       jobDescription,
       resumePath: uploadedFile.path,
-      resumeImage: uploadedImage.id,
+      resumeImage: uploadedImage.path, // store the image path, not id
+      fileHash,
       feedback: "",
     };
 
-    await kv.set(`resume${UUID}`, JSON.stringify(data));
+    await kv.set(resumeKey, JSON.stringify(data));
     setStatus("Analyzing your resume...");
 
     const feedback = await ai.feedback(
@@ -68,10 +92,11 @@ const upload = () => {
 
     data.feedback = JSON.parse(feedbackText);
 
-    await kv.set(`resume${UUID}`, JSON.stringify(data));
+    await kv.set(resumeKey, JSON.stringify(data));
     setStatus("Resume analyzed successfully");
-    console.log(data);
     setIsProcessing(false);
+    // Redirect to details page for this resume
+    window.location.href = `/resume/${UUID}`;
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

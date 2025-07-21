@@ -11,6 +11,7 @@ export interface Resume {
   jobTitle?: string;
   imagePath: string;
   resumePath: string;
+  resumeImage?: string; // path to the converted image
   feedback: Feedback;
 }
 

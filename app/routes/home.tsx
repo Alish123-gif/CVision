@@ -1,13 +1,10 @@
 import Navbar from "~/components/Navbar";
-import type { Route } from "./+types/home";
-import { resumes } from "../../constants";
 import ResumeCard from "~/components/ResumeCard";
-import type { Resume } from "../../types";
 import { useNavigate } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePuterStore } from "~/lib/puter";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({}: any) {
   return [
     { title: "CVision" },
     { name: "description", content: "Welcome to CVision!" },
@@ -15,7 +12,8 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const { auth, isLoading } = usePuterStore();
+  const { auth, isLoading, getUserResumes } = usePuterStore();
+  const [resumes, setResumes] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +21,12 @@ export default function Home() {
       navigate("/auth?next=/");
     }
   }, [auth.isAuthenticated, isLoading, navigate]);
+
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      getUserResumes().then(setResumes);
+    }
+  }, [auth.isAuthenticated, getUserResumes]);
 
   return (
     <main className="bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -34,9 +38,15 @@ export default function Home() {
         </div>
       </section>
       <div className="resumes-section">
-        {resumes?.map((resume: Resume) => (
-          <ResumeCard key={resume.id} resume={resume} />
-        ))}
+        {resumes.length === 0 ? (
+          <p className="text-gray-500 text-center w-full">
+            No resumes found. Upload your first resume!
+          </p>
+        ) : (
+          resumes.map((resume: any) => (
+            <ResumeCard key={resume.id} resume={resume} />
+          ))
+        )}
       </div>
     </main>
   );
