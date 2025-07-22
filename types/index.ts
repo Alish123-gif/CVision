@@ -6,12 +6,12 @@ export interface Job {
 }
 
 export interface Resume {
-  id: string;
-  companyName?: string;
-  jobTitle?: string;
-  imagePath: string;
+  id: string; // UUID
+  companyName: string;
+  jobTitle: string;
+  jobDescription: string;
   resumePath: string;
-  resumeImage?: string; // path to the converted image
+  resumeImage: string; // path to image
   feedback: Feedback;
 }
 

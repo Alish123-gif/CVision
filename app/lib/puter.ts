@@ -420,7 +420,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
       setError("Puter.js not available");
       return [];
     }
-    // List all keys starting with 'resume'
+    // List all keys starting with 'resume:'
     const result = await puter.kv.list("resume:*", true);
     if (!result) return [];
     // Type guard for KVItem[]

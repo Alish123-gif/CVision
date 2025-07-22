@@ -44,9 +44,18 @@ const Auth = () => {
             ) : (
               <>
                 {auth.isAuthenticated ? (
-                  <button className="auth-button" onClick={auth.signOut}>
-                    <p>Log Out</p>
-                  </button>
+                  <>
+                    {auth.user && (
+                      <div className="mb-4 p-4 bg-gray-50 rounded-lg text-left text-gray-700 border border-gray-200">
+                        <div>
+                          <strong>Username:</strong> {auth.user.username}
+                        </div>
+                      </div>
+                    )}
+                    <button className="auth-button" onClick={auth.signOut}>
+                      <p>Log Out</p>
+                    </button>
+                  </>
                 ) : (
                   <button className="auth-button" onClick={handleSignIn}>
                     <p>Log In</p>

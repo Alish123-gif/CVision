@@ -15,6 +15,20 @@ async function hashFile(file: File): Promise<string> {
     .join("");
 }
 
+function Step({ active, label }: { active: boolean; label: string }) {
+  return (
+    <span
+      className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 ${
+        active
+          ? "bg-primary text-white border-primary shadow"
+          : "bg-gray-100 text-gray-400 border-gray-200"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
 const upload = () => {
   const { auth, isLoading, ai, kv, fs } = usePuterStore();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,21 +48,6 @@ const upload = () => {
     setStatus("Checking for duplicate resumes...");
 
     if (!resume || !auth.user) return;
-
-    // Hash the file
-    const fileHash = await hashFile(resume);
-    const resumeKey = `resume:${auth.user.uuid}:${fileHash}`;
-
-    // Check for existing resume with this hash
-    const existing = await kv.get(resumeKey);
-    if (existing) {
-      setStatus("Resume already exists. Using existing analysis.");
-      setIsProcessing(false);
-      // Optionally, redirect to details page for this resume
-      const existingData = JSON.parse(existing);
-      window.location.href = `/resume/${existingData.id}`;
-      return;
-    }
 
     setStatus("Uploading your resume...");
     const uploadedFile = await fs.upload([resume]);
@@ -72,12 +71,11 @@ const upload = () => {
       jobTitle,
       jobDescription,
       resumePath: uploadedFile.path,
-      resumeImage: uploadedImage.path, // store the image path, not id
-      fileHash,
+      resumeImage: uploadedImage.path,
       feedback: "",
     };
 
-    await kv.set(resumeKey, JSON.stringify(data));
+    await kv.set(`resume:${UUID}`, JSON.stringify(data));
     setStatus("Analyzing your resume...");
 
     const feedback = await ai.feedback(
@@ -92,7 +90,7 @@ const upload = () => {
 
     data.feedback = JSON.parse(feedbackText);
 
-    await kv.set(resumeKey, JSON.stringify(data));
+    await kv.set(`resume:${UUID}`, JSON.stringify(data));
     setStatus("Resume analyzed successfully");
     setIsProcessing(false);
     // Redirect to details page for this resume
@@ -123,17 +121,43 @@ const upload = () => {
         <div className="page-heading py-16">
           <h1>Smart feedback for your dream job</h1>
           {isProcessing ? (
-            <>
-              <h2>Processing your resume...</h2>
-              <div className="relative inline-block w-16 h-16 mb-2">
-                <FaFileAlt className="w-16 h-16 rounded-lg text-secondary" />
-                <div
-                  className="absolute left-0 w-16 h-1 bg-primary opacity-80 scan-line-animate"
-                  style={{ borderRadius: "2px" }}
-                />
-                {status}
+            <div className="flex flex-col items-center justify-center mt-8">
+              <div className="bg-white/80 rounded-2xl shadow-lg px-8 py-8 flex flex-col items-center w-full max-w-md border border-gray-200 animate-fade-in">
+                <div className="mb-4 flex flex-col items-center">
+                  {/* Animated spinner */}
+                  <span className="relative flex h-16 w-16 mb-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-40"></span>
+                    <span className="relative inline-flex rounded-full h-16 w-16 bg-primary/10 items-center justify-center">
+                      <FaFileAlt className="w-10 h-10 text-primary" />
+                    </span>
+                  </span>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                    Processing your resume...
+                  </h2>
+                  {/* Step indicator */}
+                  <div className="flex items-center gap-2 my-2">
+                    <Step
+                      active={status.includes("Uploading")}
+                      label="Upload"
+                    />
+                    <Step
+                      active={status.includes("Converting")}
+                      label="Convert"
+                    />
+                    <Step active={status.includes("Saving")} label="Save" />
+                    <Step
+                      active={status.includes("Analyzing")}
+                      label="Analyze"
+                    />
+                  </div>
+                  <div className="w-full text-center mt-2">
+                    <span className="inline-block px-4 py-2 rounded bg-primary/10 text-primary font-medium animate-pulse">
+                      {status}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </>
+            </div>
           ) : (
             <h2>Drop your resume for an ATS score and improvement tips</h2>
           )}

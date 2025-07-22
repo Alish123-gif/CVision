@@ -1,12 +1,22 @@
 import React from "react";
 import type { Resume } from "../../types";
 import { Link } from "react-router";
+import { useResumeImageQuery } from "~/lib/queries";
+import { FaFileAlt } from "react-icons/fa";
 
 interface ResumeCardProps {
   resume: Resume;
 }
 
 const ResumeCard = ({ resume }: ResumeCardProps) => {
+  console.log("ResumeCard", resume);
+  const { data: imageUrl = <FaFileAlt />, isLoading } = useResumeImageQuery(
+    resume.resumeImage &&
+      (resume.resumeImage.startsWith("/") || resume.resumeImage.startsWith("~"))
+      ? resume.resumeImage
+      : undefined
+  );
+
   const getScoreClass = (score: number) => {
     if (score >= 80) return "score-excellent";
     if (score >= 60) return "score-good";
@@ -23,10 +33,15 @@ const ResumeCard = ({ resume }: ResumeCardProps) => {
 
   return (
     <div className="resume-card fade-in">
-      <img
-        src={resume.resumeImage || "/images/pdf.png"}
-        alt={`${resume.companyName} Resume`}
-      />
+      {isLoading ? (
+        <div className="w-full h-32 flex items-center justify-center bg-gray-100">
+          <span className="animate-spin">Loading...</span>
+        </div>
+      ) : typeof imageUrl == "string" ? (
+        <img src={imageUrl} alt={`${resume.companyName} Resume`} />
+      ) : (
+        imageUrl
+      )}
 
       <div className="p-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">

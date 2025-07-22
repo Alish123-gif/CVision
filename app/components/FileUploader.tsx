@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { formatSize } from "../lib/utils";
-import { FaInfoCircle, FaTimes } from "react-icons/fa";
+import { FaFileAlt, FaInfoCircle, FaTimes } from "react-icons/fa";
 
 interface FileUploaderProps {
   onFileSelect?: (file: File | null) => void;
@@ -37,7 +37,7 @@ const FileUploader = ({ onFileSelect }: FileUploaderProps) => {
               className="uploader-selected-file"
               onClick={(e) => e.stopPropagation()}
             >
-              <img src="/images/pdf.png" alt="pdf" className="size-10" />
+              <FaFileAlt className="size-10" />
               <div className="flex items-center space-x-3">
                 <div>
                   <p className="text-sm font-medium text-gray-700 truncate max-w-xs">

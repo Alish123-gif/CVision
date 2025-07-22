@@ -1,3 +1,5 @@
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   isRouteErrorResponse,
   Links,
@@ -11,6 +13,8 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { usePuterStore } from "./lib/puter";
 import { useEffect } from "react";
+
+const queryClient = new QueryClient();
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -48,9 +52,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
-  return <Outlet />;
+function AppRoot() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
+  );
 }
+
+export default AppRoot;
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
