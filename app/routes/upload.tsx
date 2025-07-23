@@ -6,15 +6,6 @@ import FileUploader from "~/components/FileUploader";
 import { usePuterStore } from "~/lib/puter";
 import { preparePrompt } from "~/../constants";
 
-// Helper to hash a file (SHA-256)
-async function hashFile(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const hashBuffer = await window.crypto.subtle.digest("SHA-256", arrayBuffer);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 function Step({ active, label }: { active: boolean; label: string }) {
   return (
     <span
